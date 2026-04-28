@@ -1,0 +1,10 @@
+# Vanna 2.0 快速入门示例项目依赖
+# 安装命令: pip install -r requirements.txt
+
+# Vanna 核心包（包含 fastapi 和 ollama 支持）
+vanna[fastapi,ollama]==2.0.2
+
+# HTTP 客户端（用于下载示例数据库）
+httpx
+
+# 数据库驱动（SQLite 是 Python 内置的，无需额外安装）

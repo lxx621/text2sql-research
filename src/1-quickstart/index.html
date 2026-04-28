@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanna AI - Text-to-SQL Chat</title>
+    <style>
+        :root {
+            --bg-color-light: #f5f5f5;
+            --bg-color-dark: #1a1a1a;
+            --text-color-light: #333;
+            --text-color-dark: #f0f0f0;
+            --header-bg-light: #ffffff;
+            --header-bg-dark: #2d2d2d;
+            --toggle-bg-light: #e0e0e0;
+            --toggle-bg-dark: #3d3d3d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* 浅色主题 */
+        body.light-theme {
+            background-color: var(--bg-color-light);
+            color: var(--text-color-light);
+        }
+
+        /* 深色主题 */
+        body.dark-theme {
+            background-color: var(--bg-color-dark);
+            color: var(--text-color-dark);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        body.light-theme .header {
+            background-color: var(--header-bg-light);
+        }
+
+        body.dark-theme .header {
+            background-color: var(--header-bg-dark);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+            user-select: none;
+        }
+
+        body.light-theme .theme-toggle {
+            background-color: var(--toggle-bg-light);
+        }
+
+        body.dark-theme .theme-toggle {
+            background-color: var(--toggle-bg-dark);
+        }
+
+        .theme-toggle:hover {
+            opacity: 0.8;
+        }
+
+        .theme-icon {
+            font-size: 20px;
+        }
+
+        .theme-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .info-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        body.light-theme .info-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+        }
+
+        body.dark-theme .info-card {
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+        }
+
+        .info-card h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-card p {
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .info-card code {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        body.dark-theme .info-card code {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .cookie-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        body.dark-theme .cookie-info {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <header class="header">
+        <h1>🤖 Vanna AI - Text-to-SQL</h1>
+        <div class="theme-toggle" onclick="toggleTheme()">
+            <span class="theme-icon" id="themeIcon">🌙</span>
+            <span class="theme-text" id="themeText">深色模式</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="info-card">
+            <h3>📝 使用说明</h3>
+            <p>1. 确保后端服务已启动（运行 <code>python app.py</code>）</p>
+            <p>2. 用户身份已通过 URL 参数自动设置（admin@example.com）</p>
+            <p>3. 开始用自然语言提问，例如："列出所有艺术家"</p>
+            <p class="cookie-info">💡 提示：后端支持 Cookie、URL 参数和请求头三种认证方式</p>
+        </div>
+
+        <!-- Vanna Chat 组件 -->
+        <div id="chatContainer">
+            <div id="loadingState" style="text-align: center; padding: 40px;">
+                <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                <p>正在加载聊天组件...</p>
+            </div>
+            <div id="errorState" style="display: none; text-align: center; padding: 40px;">
+                <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+                <p id="errorMessage">组件加载失败</p>
+                <p style="font-size: 14px; margin-top: 10px; opacity: 0.7;">请检查网络连接或刷新页面重试</p>
+            </div>
+            <vanna-chat
+                id="vannaChat"
+                sse-endpoint="http://localhost:8000/api/vanna/v2/chat_sse?email=admin@example.com"
+                theme="light"
+                style="height: 600px; width: 100%; border-radius: 8px; display: none;">
+            </vanna-chat>
+        </div>
+    </div>
+
+    <!-- 引入 Vanna Web 组件（作为 ES Module） -->
+    <script type="module">
+        // 动态加载 vanna-components.js
+        try {
+            await import('https://img.vanna.ai/vanna-components.js');
+            console.log('✅ Vanna 组件脚本加载成功');
+            
+            // 等待组件注册
+            setTimeout(() => {
+                const vannaChat = document.getElementById('vannaChat');
+                const loadingState = document.getElementById('loadingState');
+                const errorState = document.getElementById('errorState');
+                
+                if (vannaChat && customElements.get('vanna-chat')) {
+                    console.log('✅ vanna-chat 组件已注册');
+                    loadingState.style.display = 'none';
+                    vannaChat.style.display = 'block';
+                } else {
+                    console.error('❌ vanna-chat 组件未注册');
+                    loadingState.style.display = 'none';
+                    errorState.style.display = 'block';
+                    document.getElementById('errorMessage').innerHTML = 
+                        '组件未正确注册<br><a href="http://localhost:8000" target="_blank" style="color: #4a90e2;">点击访问官方 UI</a>';
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('❌ Vanna 组件脚本加载失败:', error);
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            
+            loadingState.style.display = 'none';
+            errorState.style.display = 'block';
+            document.getElementById('errorMessage').innerHTML = 
+                'CDN 脚本加载失败<br><a href="http://localhost:8000" target="_blank" style="color: #4a90e2;">点击访问官方 UI</a>';
+        }
+    </script>
+
+    <script>
+        // 主题切换功能
+        let currentTheme = 'light';
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            const vannaChat = document.getElementById('vannaChat');
+
+            if (currentTheme === 'light') {
+                // 切换到深色模式
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = '浅色模式';
+                if (vannaChat) vannaChat.setAttribute('theme', 'dark');
+                currentTheme = 'dark';
+            } else {
+                // 切换到浅色模式
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = '深色模式';
+                if (vannaChat) vannaChat.setAttribute('theme', 'light');
+                currentTheme = 'light';
+            }
+        }
+
+        // 监听 vanna-chat 组件消息
+        document.addEventListener('DOMContentLoaded', function() {
+            const vannaChat = document.getElementById('vannaChat');
+            
+            if (vannaChat) {
+                vannaChat.addEventListener('message-sent', function(e) {
+                    console.log('用户发送消息:', e.detail.message);
+                });
+
+                vannaChat.addEventListener('message-received', function(e) {
+                    console.log('收到回复:', e.detail.message);
+                });
+            }
+        });
+
+        // 自动检查后端连接
+        async function checkBackendConnection() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                if (response.ok) {
+                    console.log('✅ 后端服务连接正常');
+                } else {
+                    console.warn('⚠️ 后端服务响应异常');
+                }
+            } catch (error) {
+                console.error('❌ 无法连接到后端服务，请确保已运行 python app.py');
+                console.error('错误详情:', error.message);
+            }
+        }
+
+        // 页面加载时检查连接
+        window.addEventListener('load', function() {
+            checkBackendConnection();
+            
+            // 检查组件是否已加载
+            setTimeout(() => {
+                if (!customElements.get('vanna-chat')) {
+                    console.warn('⚠️ vanna-chat 组件可能未正确加载，请检查网络');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
