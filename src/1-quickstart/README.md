@@ -70,12 +70,26 @@ python app.py
 
 ## 使用说明
 
-### Web UI 访问
+### 方式一：官方 Web UI（推荐）
 
-1. 在浏览器中打开: http://localhost:8000
-2. 设置 Cookie: `vanna_email=admin@example.com` (管理员权限)
+1. 启动后端服务：`python app.py`
+2. 在浏览器中打开: http://localhost:8000
+3. 设置 Cookie: `vanna_email=admin@example.com` (管理员权限)
    - 或设置 `vanna_email=user@example.com` (普通用户权限)
-3. 开始用自然语言提问
+4. 开始用自然语言提问
+
+### 方式二：自定义 HTML5 页面
+
+1. 启动后端服务：`python app.py`
+2. 双击打开 `index.html` 文件
+3. 用户身份已通过 URL 参数自动设置（admin@example.com）
+4. 支持明暗主题切换，点击右上角按钮切换
+5. 开始用自然语言提问
+
+**优势**：
+- 无需设置 Cookie
+- 支持明暗主题切换
+- 可直接用 file:// 协议打开，无需额外 Web 服务器
 
 ### 示例问题
 
@@ -95,6 +109,7 @@ src/1-quickstart/
 ├── app.py              # 主程序文件
 ├── requirements.txt    # 项目依赖
 ├── README.md          # 说明文档
+├── index.html         # 自定义 HTML5 页面（支持主题切换）
 └── Chinook.sqlite     # 示例数据库（首次运行时自动下载）
 ```
 
@@ -102,7 +117,13 @@ src/1-quickstart/
 
 ### 1. 用户认证
 
-使用基于 Cookie 的简单认证系统：
+支持三种认证方式，按优先级依次尝试：
+
+- **Cookie**: `vanna_email=admin@example.com`
+- **URL 参数**: `?email=admin@example.com`
+- **请求头**: `X-Vanna-Email: admin@example.com`
+
+权限分配：
 - `admin@example.com`: 管理员权限（可保存正确的工具使用）
 - 其他用户: 普通用户权限（仅可查询和搜索）
 
@@ -116,6 +137,8 @@ src/1-quickstart/
 ### 3. Agent 记忆
 
 使用 `DemoAgentMemory` 存储最多 1000 条历史记录，支持学习和改进。
+- 数据存储在内存中，程序重启后数据丢失
+- 如需持久化，可使用 `ChromaAgentMemory`
 
 ## 配置说明
 
@@ -156,6 +179,15 @@ ollama pull gemma4:e4b
 
 首次运行需要联网下载 Chinook.sqlite，如果失败可手动下载：
 https://vanna.ai/Chinook.sqlite
+
+如果本地已存在数据库文件，程序会自动跳过下载。
+
+### 4. 自定义 HTML 页面组件不显示
+
+如果 `index.html` 中的聊天组件不显示：
+- 检查后端服务是否启动：`python app.py`
+- 查看浏览器控制台是否有错误（F12）
+- 如果 CDN 加载失败，可直接访问官方 UI：http://localhost:8000
 
 ## 参考文档
 
