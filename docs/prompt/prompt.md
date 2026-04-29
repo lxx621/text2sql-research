@@ -21,3 +21,13 @@
 上下文窗口过滤：自动截断超长对话历史
 Token 限制：强制执行输入输出 token 上限
 相似度阈值：只检索高相似度的相关内容
+
+---
+
+1. "src\2-demo1"为新建项目目录
+2. 根据 https://zread.ai/vanna-ai/vanna/2-quick-start 的示例，帮我创建示例项目
+3. LLM使用ollama，默认localhost:11434，模型：gemma4:e4b
+
+
+
+
